@@ -4,13 +4,16 @@
   "private": true,
   "description": "Проект «{{projectTitle}}» от HTML Academy",
   "scripts": {
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "build": "webpack --entry ./src/main.js --mode production",
+    "start": "webpack serve --entry ./src/main.js --mode development --open"
   },
   "devDependencies": {
     "eslint": "8.38.0",
     "eslint-config-htmlacademy": "9.0.0",
     "webpack": "5.109.2",
-    "webpack-cli": "7.2.2"
+    "webpack-cli": "7.2.2",
+    "webpack-dev-server": "6.0.0"
   },
   "engines": {
     "node": "20"
