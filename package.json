@@ -8,7 +8,9 @@
   },
   "devDependencies": {
     "eslint": "8.38.0",
-    "eslint-config-htmlacademy": "9.0.0"
+    "eslint-config-htmlacademy": "9.0.0",
+    "webpack": "5.109.2",
+    "webpack-cli": "7.2.2"
   },
   "engines": {
     "node": "20"
