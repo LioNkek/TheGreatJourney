@@ -5,11 +5,13 @@
   "description": "Проект «{{projectTitle}}» от HTML Academy",
   "scripts": {
     "lint": "eslint src/",
-    "build": "webpack --entry ./src/main.js --mode production",
-    "start": "webpack serve --entry ./src/main.js --mode development --open"
+    "build": "webpack --mode production",
+    "start": "webpack serve --mode development --open"
   },
   "devDependencies": {
     "@babel/core": "8.0.1",
+    "@babel/preset-env": "8.0.2",
+    "babel-loader": "10.1.1",
     "eslint": "8.38.0",
     "eslint-config-htmlacademy": "9.0.0",
     "webpack": "5.109.2",
