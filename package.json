@@ -9,6 +9,7 @@
     "start": "webpack serve --entry ./src/main.js --mode development --open"
   },
   "devDependencies": {
+    "@babel/core": "8.0.1",
     "eslint": "8.38.0",
     "eslint-config-htmlacademy": "9.0.0",
     "webpack": "5.109.2",
