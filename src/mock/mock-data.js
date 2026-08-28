@@ -1,4 +1,5 @@
 import { TYPES } from '../model/type.js';
+import dayjs from 'dayjs';
 
 // Города
 const CITIES = [
@@ -12,26 +13,28 @@ const CITIES = [
   'Madrid'
 ];
 
-// Описания для городов (из ТЗ)
+// Описания для городов
 const DESCRIPTIONS = [
   'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
   'Cras aliquet varius magna, non porta ligula feugiat eget.',
   'Fusce tristique felis at fermentum pharetra.',
   'Aliquam id orci ut lectus varius viverra.',
   'Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante.',
+  'Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum.',
+  'Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui.',
+  'Sed sed nisi sed augue convallis suscipit in sed felis.',
+  'Aliquam erat volutpat. Nunc fermentum tortor ac porta dapibus.',
+  'In rutrum ac purus sit amet tempus.'
 ];
 
-// Генерация случайного числа в диапазоне
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Генерация случайного элемента из массива
 function getRandomItem(array) {
   return array[getRandomInt(0, array.length - 1)];
 }
 
-// Генерация ID
 function generateId() {
   return String(Date.now() + Math.random());
 }
@@ -39,10 +42,16 @@ function generateId() {
 // Генерация пункта назначения
 export function generateDestination(id) {
   const city = getRandomItem(CITIES);
+  const descriptionCount = getRandomInt(1, 5);
+  const descriptions = [];
+  for (let i = 0; i < descriptionCount; i++) {
+    descriptions.push(getRandomItem(DESCRIPTIONS));
+  }
+
   return {
     id: id || generateId(),
     name: city,
-    description: DESCRIPTIONS.slice(0, getRandomInt(1, 5)).join(' '),
+    description: descriptions.join(' '),
     pictures: Array.from({ length: getRandomInt(1, 5) }, () => ({
       src: `https://loremflickr.com/248/152?random=${getRandomInt(0, 1000)}`,
       description: `Photo of ${city}`
@@ -82,8 +91,7 @@ export function generateOffersForType(type) {
       { title: 'Add luggage', price: 50 },
       { title: 'Switch to comfort', price: 80 },
       { title: 'Add meal', price: 15 },
-      { title: 'Choose seats', price: 5 },
-      { title: 'Travel by train', price: 40 }
+      { title: 'Choose seats', price: 5 }
     ],
     'check-in': [
       { title: 'Breakfast', price: 20 },
@@ -110,12 +118,12 @@ export function generateOffersForType(type) {
   }));
 }
 
-// Генерация случайной даты
+// Генерация случайной даты в ISO формате (с учетом часового пояса)
 function generateDate(from, to) {
-  const fromTime = new Date(from).getTime();
-  const toTime = new Date(to).getTime();
+  const fromTime = dayjs(from).valueOf();
+  const toTime = dayjs(to).valueOf();
   const randomTime = fromTime + Math.random() * (toTime - fromTime);
-  return new Date(randomTime).toISOString();
+  return dayjs(randomTime).toISOString();
 }
 
 // Генерация точки маршрута
@@ -131,13 +139,11 @@ export function generatePoint(destinations, offers) {
     .filter(() => Math.random() > 0.5)
     .map((offer) => offer.id);
 
-  const now = new Date();
-  const future = new Date(now);
-  future.setDate(future.getDate() + getRandomInt(1, 30));
+  const now = dayjs();
+  const future = now.add(getRandomInt(1, 30), 'day');
 
   const dateFrom = generateDate(now.toISOString(), future.toISOString());
-  const dateTo = new Date(dateFrom);
-  dateTo.setHours(dateTo.getHours() + getRandomInt(1, 5));
+  const dateTo = dayjs(dateFrom).add(getRandomInt(1, 5), 'hour').toISOString();
 
   return {
     id: generateId(),
@@ -145,7 +151,7 @@ export function generatePoint(destinations, offers) {
     destination: destination.id,
     offers: selectedOffers,
     dateFrom,
-    dateTo: dateTo.toISOString(),
+    dateTo,
     basePrice: getRandomInt(10, 200),
     isFavorite: Math.random() > 0.7
   };

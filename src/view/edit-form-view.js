@@ -1,12 +1,11 @@
 import AbstractView from './abstract-view.js';
 import { TYPES } from '../model/type.js';
+import { formatDateForInput } from '../utils/date-utils.js';
 
-// Вспомогательная функция для иконки
 function getTypeIcon(type) {
   return `img/icons/${type}.png`;
 }
 
-// Генерация HTML для типов
 function createTypesHTML(currentType) {
   return TYPES.map((type) => {
     const checked = type === currentType ? 'checked' : '';
@@ -19,14 +18,12 @@ function createTypesHTML(currentType) {
   }).join('');
 }
 
-// Генерация HTML для пунктов назначения
-function createDestinationsHTML(destinations, currentDestinationId) {
+function createDestinationsHTML(destinations, currentDestinationName) {
   return destinations.map((dest) => `
-    <option value="${dest.id}" ${dest.id === currentDestinationId ? 'selected' : ''}>${dest.name}</option>
+    <option value="${dest.name}" ${dest.name === currentDestinationName ? 'selected' : ''}>${dest.name}</option>
   `).join('');
 }
 
-// Генерация HTML для опций
 function createOffersHTML(offers, selectedOfferIds) {
   if (!offers || offers.length === 0) {
     return '';
@@ -47,7 +44,6 @@ function createOffersHTML(offers, selectedOfferIds) {
   }).join('');
 }
 
-// Генерация HTML для фотографий
 function createPhotosHTML(pictures) {
   if (!pictures || pictures.length === 0) {
     return '';
@@ -73,12 +69,12 @@ function createEditFormTemplate({
   const pictures = destination ? destination.pictures : [];
 
   const typesHTML = createTypesHTML(point.type || 'flight');
-  const destinationsHTML = createDestinationsHTML(allDestinations, destination ? destination.id : '');
+  const destinationsHTML = createDestinationsHTML(allDestinations, destinationName);
   const offersHTML = createOffersHTML(allOffers, offers || []);
   const photosHTML = createPhotosHTML(pictures);
 
-  const dateFrom = point.dateFrom ? point.dateFrom.split('T').join(' ').slice(0, 16) : '';
-  const dateTo = point.dateTo ? point.dateTo.split('T').join(' ').slice(0, 16) : '';
+  const dateFrom = point.dateFrom ? formatDateForInput(point.dateFrom) : '';
+  const dateTo = point.dateTo ? formatDateForInput(point.dateTo) : '';
   const price = point.basePrice || '';
 
   return `
@@ -104,7 +100,7 @@ function createEditFormTemplate({
             <label class="event__label event__type-output" for="event-destination-1">
               ${typeName}
             </label>
-            <input class="event__input event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationName}" list="destination-list-1">
+            <input class="event__input event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationName}" list="destination-list-1" placeholder="Type destination">
             <datalist id="destination-list-1">
               ${destinationsHTML}
             </datalist>

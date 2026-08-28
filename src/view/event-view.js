@@ -1,33 +1,5 @@
 import AbstractView from './abstract-view.js';
-
-function formatDate(date) {
-  const d = new Date(date);
-  const month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${month} ${day}`;
-}
-
-function formatTime(date) {
-  const d = new Date(date);
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-
-function formatDuration(dateFrom, dateTo) {
-  const diff = new Date(dateTo) - new Date(dateFrom);
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (days > 0) {
-    return `${days}D ${hours % 24}H ${minutes % 60}M`;
-  } else if (hours > 0) {
-    return `${hours}H ${minutes % 60}M`;
-  } else {
-    return `${minutes}M`;
-  }
-}
+import { formatDate, formatTime, formatDuration } from '../utils/date-utils.js';
 
 function createOffersHTML(offers) {
   if (!offers || offers.length === 0) {
@@ -49,16 +21,16 @@ function createEventTemplate({ point, destination, offers }) {
 
   return `
     <div class="event">
-      <time class="event__date" datetime="${new Date(point.dateFrom).toISOString().split('T')[0]}">${formatDate(point.dateFrom)}</time>
+      <time class="event__date">${formatDate(point.dateFrom)}</time>
       <div class="event__type">
         <img class="event__type-icon" width="42" height="42" src="img/icons/${point.type}.png" alt="Event type icon">
       </div>
       <h3 class="event__title">${typeName} ${destination ? destination.name : ''}</h3>
       <div class="event__schedule">
         <p class="event__time">
-          <time class="event__start-time" datetime="${point.dateFrom}">${formatTime(point.dateFrom)}</time>
+          <time class="event__start-time">${formatTime(point.dateFrom)}</time>
           &mdash;
-          <time class="event__end-time" datetime="${point.dateTo}">${formatTime(point.dateTo)}</time>
+          <time class="event__end-time">${formatTime(point.dateTo)}</time>
         </p>
         <p class="event__duration">${formatDuration(point.dateFrom, point.dateTo)}</p>
       </div>
