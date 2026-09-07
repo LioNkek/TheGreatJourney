@@ -1,4 +1,4 @@
-import AbstractView from './abstract-view.js';
+import AbstractView from '../framework/view/abstract-view.js';
 import { formatDate, formatTime, formatDuration } from '../utils/date-utils.js';
 
 function createOffersHTML(offers) {
@@ -58,13 +58,24 @@ export default class EventView extends AbstractView {
   #point = null;
   #destination = null;
   #offers = [];
+  #handleRollupClick = null;
 
-  constructor({ point, destination, offers }) {
+  constructor({ point, destination, offers, onRollupClick }) {
     super();
     this.#point = point;
     this.#destination = destination;
     this.#offers = offers || [];
+    this.#handleRollupClick = onRollupClick;
+
+    this.element
+      .querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#rollupClickHandler.bind(this));
   }
+
+  #rollupClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleRollupClick?.();
+  };
 
   get template() {
     return createEventTemplate({

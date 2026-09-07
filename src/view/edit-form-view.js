@@ -1,4 +1,4 @@
-import AbstractView from './abstract-view.js';
+import AbstractView from '../framework/view/abstract-view.js';
 import { TYPES } from '../model/type.js';
 import { formatDateForInput } from '../utils/date-utils.js';
 
@@ -163,8 +163,18 @@ export default class EditFormView extends AbstractView {
   #allOffers = [];
   #allDestinations = [];
   #isNew = false;
+  #handleFormSubmit = null;
+  #handleRollupClick = null;
 
-  constructor({ point, destination, offers, allOffers, allDestinations, isNew = false }) {
+  constructor({ point,
+    destination,
+    offers,
+    allOffers,
+    allDestinations,
+    isNew = false,
+    onFormSubmit,
+    onRollupClick
+  }) {
     super();
     this.#point = point;
     this.#destination = destination;
@@ -172,7 +182,28 @@ export default class EditFormView extends AbstractView {
     this.#allOffers = allOffers || [];
     this.#allDestinations = allDestinations || [];
     this.#isNew = isNew;
+    this.#handleFormSubmit = onFormSubmit;
+    this.#handleRollupClick = onRollupClick;
+
+    this.element
+      .querySelector('form')
+      .addEventListener('submit', this.#formSubmitHandler.bind(this));
+
+    const rollupBtn = this.element.querySelector('.event__rollup-btn');
+    if (rollupBtn) {
+      rollupBtn.addEventListener('click', this.#rollupClickHandler.bind(this));
+    }
   }
+
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormSubmit?.();
+  };
+
+  #rollupClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleRollupClick?.();
+  };
 
   get template() {
     return createEditFormTemplate({
