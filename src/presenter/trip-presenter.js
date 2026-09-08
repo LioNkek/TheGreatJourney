@@ -4,6 +4,7 @@ import SortView from '../view/sort-view.js';
 import EventView from '../view/event-view.js';
 import EditFormView from '../view/edit-form-view.js';
 import AddFormView from '../view/add-form-view.js';
+import TripEmptyView from '../view/trip-empty-view.js';
 import Model from '../model/model.js';
 
 export default class TripPresenter {
@@ -12,6 +13,7 @@ export default class TripPresenter {
   #sortContainer = null;
   #model = null;
   #pointComponents = new Map();
+  #currentFilter = 'everything';
 
   constructor({ tripEventsContainer, filtersContainer, sortContainer }) {
     this.#tripEventsContainer = tripEventsContainer;
@@ -28,8 +30,42 @@ export default class TripPresenter {
     document.addEventListener('keydown', this.#escKeydownHandler);
   }
 
+  #getFilters() {
+    const points = this.#model.points;
+    const now = new Date();
+
+    const filterTypes = [
+      { type: 'everything', name: 'Everything' },
+      { type: 'future', name: 'Future' },
+      { type: 'present', name: 'Present' },
+      { type: 'past', name: 'Past' }
+    ];
+
+    const futurePoints = points.filter((point) => new Date(point.dateFrom) > now);
+    const presentPoints = points.filter((point) => {
+      const from = new Date(point.dateFrom);
+      const to = new Date(point.dateTo);
+      return from <= now && to >= now;
+    });
+    const pastPoints = points.filter((point) => new Date(point.dateTo) < now);
+
+    const counts = {
+      future: futurePoints.length,
+      present: presentPoints.length,
+      past: pastPoints.length
+    };
+
+    return filterTypes.map((filter) => ({
+      type: filter.type,
+      name: filter.name,
+      checked: filter.type === this.#currentFilter,
+      disabled: points.length === 0 ? filter.type !== 'everything' : counts[filter.type] === 0
+    }));
+  }
+
   #renderFilters() {
-    const filtersComponent = new FiltersView();
+    const filters = this.#getFilters();
+    const filtersComponent = new FiltersView({ filters });
     render(filtersComponent, this.#filtersContainer);
   }
 
@@ -43,6 +79,13 @@ export default class TripPresenter {
     const destinations = this.#model.destinations;
     const allOffers = this.#model.offers;
 
+    // Если точек нет — показываем заглушку
+    if (points.length === 0) {
+      this.#renderEmpty('everything');
+      return;
+    }
+
+    // Форма создания
     const addFormComponent = new AddFormView({
       allDestinations: destinations
     });
@@ -73,6 +116,11 @@ export default class TripPresenter {
     });
 
     render(eventComponent, this.#tripEventsContainer);
+  }
+
+  #renderEmpty(filterType) {
+    const emptyComponent = new TripEmptyView({ filterType });
+    render(emptyComponent, this.#tripEventsContainer);
   }
 
   #replacePointToEdit(point, destinations, allOffers) {
