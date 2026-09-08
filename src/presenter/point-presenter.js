@@ -121,4 +121,15 @@ export default class PointPresenter {
     replace(newPointComponent, this.#pointComponent);
     this.#pointComponent = newPointComponent;
   }
+
+  destroy() {
+    if (this.#pointComponent) {
+      this.#pointComponent.removeElement();
+      this.#pointComponent = null;
+    }
+    if (this.#editComponent) {
+      this.#editComponent.removeElement();
+      this.#editComponent = null;
+    }
+  }
 }

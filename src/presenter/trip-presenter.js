@@ -12,6 +12,7 @@ export default class TripPresenter {
   #sortContainer = null;
   #model = null;
   #currentFilter = 'everything';
+  #currentSort = 'day';
   #pointPresenters = new Map();
 
   constructor({ tripEventsContainer, filtersContainer, sortContainer }) {
@@ -69,14 +70,79 @@ export default class TripPresenter {
   }
 
   #renderSort() {
-    const sortComponent = new SortView();
+    const sortComponent = new SortView({
+      currentSort: this.#currentSort,
+      onSortChange: this.#handleSortChange.bind(this)
+    });
     render(sortComponent, this.#sortContainer);
   }
 
+  #getSortedPoints() {
+    const points = [...this.#model.points];
+
+    switch (this.#currentSort) {
+      case 'time':
+        return points.sort((a, b) => {
+          const durationA = new Date(a.dateTo) - new Date(a.dateFrom);
+          const durationB = new Date(b.dateTo) - new Date(b.dateFrom);
+          return durationB - durationA;
+        });
+      case 'price':
+        return points.sort((a, b) => b.basePrice - a.basePrice);
+      case 'day':
+      default:
+        return points.sort((a, b) => new Date(a.dateFrom) - new Date(b.dateFrom));
+    }
+  }
+
+  #reorderPoints() {
+    const sortedPoints = this.#getSortedPoints();
+
+    const listElement = this.#tripEventsContainer.querySelector('.trip-events__list');
+    if (!listElement) {
+      return;
+    }
+
+    const items = listElement.querySelectorAll('.trip-events__item');
+    const itemMap = new Map();
+    items.forEach((item) => {
+      const pointId = item.dataset.pointId;
+      if (pointId) {
+        itemMap.set(pointId, item);
+      }
+    });
+
+    sortedPoints.forEach((point) => {
+      const item = itemMap.get(point.id);
+      if (item) {
+        listElement.append(item);
+      }
+    });
+  }
+
+  #clearTripEvents() {
+    for (const [, presenter] of this.#pointPresenters) {
+      presenter.destroy();
+    }
+    this.#pointPresenters.clear();
+
+    const list = this.#tripEventsContainer.querySelector('.trip-events__list');
+    if (list) {
+      list.remove();
+    }
+
+    const empty = this.#tripEventsContainer.querySelector('.trip-events__msg');
+    if (empty) {
+      empty.remove();
+    }
+  }
+
   #renderTripEvents() {
-    const points = this.#model.points;
+    const points = this.#getSortedPoints();
     const destinations = this.#model.destinations;
     const allOffers = this.#model.offers;
+
+    this.#clearTripEvents();
 
     if (points.length === 0) {
       this.#renderEmpty('everything');
@@ -88,15 +154,17 @@ export default class TripPresenter {
     });
     render(addFormComponent, this.#tripEventsContainer);
 
-    this.#clearPointPresenters();
+    const listElement = document.createElement('ul');
+    listElement.className = 'trip-events__list';
+    this.#tripEventsContainer.append(listElement);
 
     for (let i = 0; i < points.length; i++) {
       const point = points[i];
-      this.#renderPoint(point, destinations, allOffers);
+      this.#renderPoint(point, destinations, allOffers, listElement);
     }
   }
 
-  #renderPoint(point, destinations, allOffers) {
+  #renderPoint(point, destinations, allOffers, container) {
     const pointPresenter = new PointPresenter({
       point: point,
       destinations: destinations,
@@ -106,7 +174,7 @@ export default class TripPresenter {
     });
 
     this.#pointPresenters.set(point.id, pointPresenter);
-    pointPresenter.init(this.#tripEventsContainer);
+    pointPresenter.init(container);
   }
 
   #renderEmpty(filterType) {
@@ -114,9 +182,14 @@ export default class TripPresenter {
     render(emptyComponent, this.#tripEventsContainer);
   }
 
-  #clearPointPresenters() {
-    this.#pointPresenters.clear();
-  }
+  #handleSortChange = (sortType) => {
+    if (this.#currentSort === sortType) {
+      return;
+    }
+
+    this.#currentSort = sortType;
+    this.#reorderPoints();
+  };
 
   #handleDataChange = (updatedPoint) => {
     const points = this.#model.points;

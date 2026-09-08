@@ -78,7 +78,7 @@ function createEditFormTemplate({
   const price = point.basePrice || '';
 
   return `
-    <li class="trip-events__item">
+    <li class="trip-events__item" data-point-id="${point.id}">
       <form class="event event--edit" action="#" method="post">
         <header class="event__header">
           <div class="event__type-wrapper">
