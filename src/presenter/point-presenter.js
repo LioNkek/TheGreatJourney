@@ -61,7 +61,7 @@ export default class PointPresenter {
       allOffers: this.#allOffers,
       allDestinations: this.#destinations,
       isNew: false,
-      formId: this.#point.id, // ✅ УНИКАЛЬНЫЙ ID
+      formId: this.#point.id,
       onFormSubmit: () => {
         this.#replaceEditToPoint();
       },

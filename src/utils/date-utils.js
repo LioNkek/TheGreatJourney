@@ -4,17 +4,17 @@ import duration from 'dayjs/plugin/duration.js';
 // Подключаем плагин для работы с длительностью
 dayjs.extend(duration);
 
-// Формат для отображения даты в карточке: "18/09/26"
+// Дата в карточке: "MAR 18"
 export function formatDate(date) {
-  return dayjs(date).format('DD/MM/YY');
+  return dayjs(date).format('MMM DD').toUpperCase();
 }
 
-// Формат для времени: "18:00"
+// Время: "10:30"
 export function formatTime(date) {
   return dayjs(date).format('HH:mm');
 }
 
-// Формат для поля ввода: "18/09/26 18:00"
+// Дата для поля ввода: "18/09/26 18:00"
 export function formatDateForInput(date) {
   if (!date) {
     return '';
@@ -22,7 +22,7 @@ export function formatDateForInput(date) {
   return dayjs(date).format('DD/MM/YY HH:mm');
 }
 
-// Форматирование длительности: "1D 02H 30M"
+// Продолжительность: "23M", "02H 44M", "51D 02H 30M"
 export function formatDuration(dateFrom, dateTo) {
   const diff = dayjs(dateTo).diff(dayjs(dateFrom));
   const diffDuration = dayjs.duration(diff);

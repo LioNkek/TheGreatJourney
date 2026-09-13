@@ -1,3 +1,5 @@
+import 'flatpickr/dist/flatpickr.min.css';
+import flatpickr from 'flatpickr';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { TYPES } from '../model/type.js';
 import { formatDateForInput } from '../utils/date-utils.js';
@@ -24,7 +26,7 @@ function createDestinationsHTML(destinations, currentDestinationName) {
   `).join('');
 }
 
-function createOffersHTML(offers, selectedOfferIds) {
+function createOffersHTML(offers, selectedOfferIds, formId) {
   if (!offers || offers.length === 0) {
     return '';
   }
@@ -33,8 +35,8 @@ function createOffersHTML(offers, selectedOfferIds) {
     const checked = selectedOfferIds.includes(offer.id) ? 'checked' : '';
     return `
       <div class="event__offer-selector">
-        <input class="event__offer-checkbox visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" ${checked}>
-        <label class="event__offer-label" for="event-offer-${offer.id}">
+        <input class="event__offer-checkbox visually-hidden" id="event-offer-${offer.id}-${formId}" type="checkbox" name="event-offer-${offer.id}" ${checked}>
+        <label class="event__offer-label" for="event-offer-${offer.id}-${formId}">
           <span class="event__offer-title">${offer.title}</span>
           &plus;&euro;&nbsp;
           <span class="event__offer-price">${offer.price}</span>
@@ -69,14 +71,13 @@ function createEditFormTemplate({
   const destinationDescription = destination ? destination.description : '';
   const pictures = destination ? destination.pictures : [];
 
-  // Фильтруем опции по текущему типу
   const currentTypeOffers = allOffers.filter((offer) =>
     offer.id.startsWith(point.type)
   );
 
   const typesHTML = createTypesHTML(point.type || 'flight', formId);
-  const destinationsHTML = createDestinationsHTML(allDestinations, destinationName, formId);
-  const offersHTML = createOffersHTML(currentTypeOffers, offers || []);
+  const destinationsHTML = createDestinationsHTML(allDestinations, destinationName);
+  const offersHTML = createOffersHTML(currentTypeOffers, offers || [], formId);
   const photosHTML = createPhotosHTML(pictures);
 
   const dateFrom = point.dateFrom ? formatDateForInput(point.dateFrom) : '';
@@ -103,29 +104,29 @@ function createEditFormTemplate({
           </div>
 
           <div class="event__field-group event__field-group--destination">
-            <label class="event__label event__type-output" for="event-destination-${formId}">
+            <label class="event__label event__type-output">
               ${typeName}
             </label>
-            <input class="event__input event__input--destination" id="event-destination-${formId}" type="text" name="event-destination" value="${destinationName}" list="destination-list-${formId}" placeholder="Type destination">
+            <input class="event__input event__input--destination" type="text" name="event-destination" value="${destinationName}" list="destination-list-${formId}" placeholder="Type destination">
             <datalist id="destination-list-${formId}">
               ${destinationsHTML}
             </datalist>
           </div>
 
           <div class="event__field-group event__field-group--time">
-            <label class="visually-hidden" for="event-start-time-${formId}">From</label>
-            <input class="event__input event__input--time" id="event-start-time-${formId}" type="text" name="event-start-time" value="${dateFrom}">
+            <label class="visually-hidden">From</label>
+            <input class="event__input event__input--time" data-input="start-time" type="text" name="event-start-time" value="${dateFrom}">
             &mdash;
-            <label class="visually-hidden" for="event-end-time-${formId}">To</label>
-            <input class="event__input event__input--time" id="event-end-time-${formId}" type="text" name="event-end-time" value="${dateTo}">
+            <label class="visually-hidden">To</label>
+            <input class="event__input event__input--time" data-input="end-time" type="text" name="event-end-time" value="${dateTo}">
           </div>
 
           <div class="event__field-group event__field-group--price">
-            <label class="event__label" for="event-price-${formId}">
+            <label class="event__label">
               <span class="visually-hidden">Price</span>
               &euro;
             </label>
-            <input class="event__input event__input--price" id="event-price-${formId}" type="text" name="event-price" value="${price}">
+            <input class="event__input event__input--price" type="text" name="event-price" value="${price}">
           </div>
 
           <button class="event__save-btn btn btn--blue" type="submit">Save</button>
@@ -185,14 +186,13 @@ export default class EditFormView extends AbstractStatefulView {
     this.#handleRollupClick = onRollupClick;
     this.#allOffers = allOffers || [];
     this.#allDestinations = allDestinations || [];
-    this.#formId = formId;
+    this.#formId = String(formId).replace(/\./g, '-'); // ✅ Заменяем точки на дефисы
 
     this._setState({
       point,
       destination,
       offers: offers || [],
-      isNew,
-      formId
+      isNew
     });
 
     this._restoreHandlers();
@@ -228,6 +228,45 @@ export default class EditFormView extends AbstractStatefulView {
     const destinationInput = this.element.querySelector('.event__input--destination');
     if (destinationInput) {
       destinationInput.addEventListener('change', this.#destinationChangeHandler);
+    }
+
+    const startTimeInput = this.element.querySelector('[data-input="start-time"]');
+    const endTimeInput = this.element.querySelector('[data-input="end-time"]');
+
+    if (startTimeInput) {
+      flatpickr(startTimeInput, {
+        dateFormat: 'd/m/y H:i',
+        enableTime: true,
+        // eslint-disable-next-line camelcase
+        time_24hr: true,
+        defaultDate: this._state.point.dateFrom || null,
+        onChange: (selectedDates) => {
+          this.updateElement({
+            point: {
+              ...this._state.point,
+              dateFrom: selectedDates[0]?.toISOString() || ''
+            }
+          });
+        }
+      });
+    }
+
+    if (endTimeInput) {
+      flatpickr(endTimeInput, {
+        dateFormat: 'd/m/y H:i',
+        enableTime: true,
+        // eslint-disable-next-line camelcase
+        time_24hr: true,
+        defaultDate: this._state.point.dateTo || null,
+        onChange: (selectedDates) => {
+          this.updateElement({
+            point: {
+              ...this._state.point,
+              dateTo: selectedDates[0]?.toISOString() || ''
+            }
+          });
+        }
+      });
     }
   };
 
