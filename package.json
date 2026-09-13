@@ -31,6 +31,8 @@
     "not ie 11"
   ],
   "dependencies": {
-    "dayjs": "^1.11.23"
+    "dayjs": "1.11.7",
+    "flatpickr": "4.6.13",
+    "he": "1.2.0"
   }
 }

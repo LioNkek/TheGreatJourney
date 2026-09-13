@@ -1,4 +1,4 @@
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { TYPES } from '../model/type.js';
 import { formatDateForInput } from '../utils/date-utils.js';
 
@@ -6,13 +6,13 @@ function getTypeIcon(type) {
   return `img/icons/${type}.png`;
 }
 
-function createTypesHTML(currentType) {
+function createTypesHTML(currentType, formId) {
   return TYPES.map((type) => {
     const checked = type === currentType ? 'checked' : '';
     return `
       <div class="event__type-item">
-        <input id="event-type-${type}-1" class="event__type-input visually-hidden" type="radio" name="event-type" value="${type}" ${checked}>
-        <label class="event__type-label event__type-label--${type}" for="event-type-${type}-1">${type.charAt(0).toUpperCase() + type.slice(1)}</label>
+        <input id="event-type-${type}-${formId}" class="event__type-input visually-hidden" type="radio" name="event-type" value="${type}" ${checked}>
+        <label class="event__type-label event__type-label--${type}" for="event-type-${type}-${formId}">${type.charAt(0).toUpperCase() + type.slice(1)}</label>
       </div>
     `;
   }).join('');
@@ -60,7 +60,8 @@ function createEditFormTemplate({
   offers,
   allOffers,
   allDestinations,
-  isNew = false
+  isNew = false,
+  formId
 }) {
   const typeIcon = point.type || 'flight';
   const typeName = point.type ? point.type.charAt(0).toUpperCase() + point.type.slice(1) : 'Flight';
@@ -68,9 +69,14 @@ function createEditFormTemplate({
   const destinationDescription = destination ? destination.description : '';
   const pictures = destination ? destination.pictures : [];
 
-  const typesHTML = createTypesHTML(point.type || 'flight');
-  const destinationsHTML = createDestinationsHTML(allDestinations, destinationName);
-  const offersHTML = createOffersHTML(allOffers, offers || []);
+  // Фильтруем опции по текущему типу
+  const currentTypeOffers = allOffers.filter((offer) =>
+    offer.id.startsWith(point.type)
+  );
+
+  const typesHTML = createTypesHTML(point.type || 'flight', formId);
+  const destinationsHTML = createDestinationsHTML(allDestinations, destinationName, formId);
+  const offersHTML = createOffersHTML(currentTypeOffers, offers || []);
   const photosHTML = createPhotosHTML(pictures);
 
   const dateFrom = point.dateFrom ? formatDateForInput(point.dateFrom) : '';
@@ -82,11 +88,11 @@ function createEditFormTemplate({
       <form class="event event--edit" action="#" method="post">
         <header class="event__header">
           <div class="event__type-wrapper">
-            <label class="event__type event__type-btn" for="event-type-toggle-1">
+            <label class="event__type event__type-btn" for="event-type-toggle-${formId}">
               <span class="visually-hidden">Choose event type</span>
               <img class="event__type-icon" width="17" height="17" src="${getTypeIcon(typeIcon)}" alt="Event type icon">
             </label>
-            <input class="event__type-toggle visually-hidden" id="event-type-toggle-1" type="checkbox">
+            <input class="event__type-toggle visually-hidden" id="event-type-toggle-${formId}" type="checkbox">
 
             <div class="event__type-list">
               <fieldset class="event__type-group">
@@ -97,29 +103,29 @@ function createEditFormTemplate({
           </div>
 
           <div class="event__field-group event__field-group--destination">
-            <label class="event__label event__type-output" for="event-destination-1">
+            <label class="event__label event__type-output" for="event-destination-${formId}">
               ${typeName}
             </label>
-            <input class="event__input event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationName}" list="destination-list-1" placeholder="Type destination">
-            <datalist id="destination-list-1">
+            <input class="event__input event__input--destination" id="event-destination-${formId}" type="text" name="event-destination" value="${destinationName}" list="destination-list-${formId}" placeholder="Type destination">
+            <datalist id="destination-list-${formId}">
               ${destinationsHTML}
             </datalist>
           </div>
 
           <div class="event__field-group event__field-group--time">
-            <label class="visually-hidden" for="event-start-time-1">From</label>
-            <input class="event__input event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${dateFrom}">
+            <label class="visually-hidden" for="event-start-time-${formId}">From</label>
+            <input class="event__input event__input--time" id="event-start-time-${formId}" type="text" name="event-start-time" value="${dateFrom}">
             &mdash;
-            <label class="visually-hidden" for="event-end-time-1">To</label>
-            <input class="event__input event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${dateTo}">
+            <label class="visually-hidden" for="event-end-time-${formId}">To</label>
+            <input class="event__input event__input--time" id="event-end-time-${formId}" type="text" name="event-end-time" value="${dateTo}">
           </div>
 
           <div class="event__field-group event__field-group--price">
-            <label class="event__label" for="event-price-1">
+            <label class="event__label" for="event-price-${formId}">
               <span class="visually-hidden">Price</span>
               &euro;
             </label>
-            <input class="event__input event__input--price" id="event-price-1" type="text" name="event-price" value="${price}">
+            <input class="event__input event__input--price" id="event-price-${formId}" type="text" name="event-price" value="${price}">
           </div>
 
           <button class="event__save-btn btn btn--blue" type="submit">Save</button>
@@ -156,44 +162,74 @@ function createEditFormTemplate({
   `;
 }
 
-export default class EditFormView extends AbstractView {
-  #point = null;
-  #destination = null;
-  #offers = [];
-  #allOffers = [];
-  #allDestinations = [];
-  #isNew = false;
+export default class EditFormView extends AbstractStatefulView {
   #handleFormSubmit = null;
   #handleRollupClick = null;
+  #allOffers = [];
+  #allDestinations = [];
+  #formId = null;
 
-  constructor({ point,
+  constructor({
+    point,
     destination,
     offers,
     allOffers,
     allDestinations,
     isNew = false,
+    formId,
     onFormSubmit,
     onRollupClick
   }) {
     super();
-    this.#point = point;
-    this.#destination = destination;
-    this.#offers = offers || [];
-    this.#allOffers = allOffers || [];
-    this.#allDestinations = allDestinations || [];
-    this.#isNew = isNew;
     this.#handleFormSubmit = onFormSubmit;
     this.#handleRollupClick = onRollupClick;
+    this.#allOffers = allOffers || [];
+    this.#allDestinations = allDestinations || [];
+    this.#formId = formId;
 
+    this._setState({
+      point,
+      destination,
+      offers: offers || [],
+      isNew,
+      formId
+    });
+
+    this._restoreHandlers();
+  }
+
+  get template() {
+    return createEditFormTemplate({
+      point: this._state.point,
+      destination: this._state.destination,
+      offers: this._state.offers,
+      allOffers: this.#allOffers,
+      allDestinations: this.#allDestinations,
+      isNew: this._state.isNew,
+      formId: this.#formId
+    });
+  }
+
+  _restoreHandlers = () => {
     this.element
       .querySelector('form')
-      .addEventListener('submit', this.#formSubmitHandler.bind(this));
+      .addEventListener('submit', this.#formSubmitHandler);
 
     const rollupBtn = this.element.querySelector('.event__rollup-btn');
     if (rollupBtn) {
-      rollupBtn.addEventListener('click', this.#rollupClickHandler.bind(this));
+      rollupBtn.addEventListener('click', this.#rollupClickHandler);
     }
-  }
+
+    const typeInputs = this.element.querySelectorAll('.event__type-input');
+    typeInputs.forEach((input) => {
+      input.addEventListener('change', this.#typeChangeHandler);
+    });
+
+    const destinationInput = this.element.querySelector('.event__input--destination');
+    if (destinationInput) {
+      destinationInput.addEventListener('change', this.#destinationChangeHandler);
+    }
+  };
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
@@ -205,14 +241,30 @@ export default class EditFormView extends AbstractView {
     this.#handleRollupClick?.();
   };
 
-  get template() {
-    return createEditFormTemplate({
-      point: this.#point,
-      destination: this.#destination,
-      offers: this.#offers,
-      allOffers: this.#allOffers,
-      allDestinations: this.#allDestinations,
-      isNew: this.#isNew
+  #typeChangeHandler = (evt) => {
+    const newType = evt.target.value;
+
+    this.updateElement({
+      point: {
+        ...this._state.point,
+        type: newType
+      },
+      offers: []
     });
-  }
+  };
+
+  #destinationChangeHandler = (evt) => {
+    const newDestinationName = evt.target.value;
+    const newDestination = this.#allDestinations.find(
+      (dest) => dest.name === newDestinationName
+    );
+
+    if (!newDestination) {
+      return;
+    }
+
+    this.updateElement({
+      destination: newDestination
+    });
+  };
 }

@@ -1,7 +1,7 @@
 import { render } from '../framework/render.js';
 import FiltersView from '../view/filters-view.js';
 import SortView from '../view/sort-view.js';
-import AddFormView from '../view/add-form-view.js';
+import EditFormView from '../view/edit-form-view.js';
 import TripEmptyView from '../view/trip-empty-view.js';
 import PointPresenter from './point-presenter.js';
 import Model from '../model/model.js';
@@ -149,8 +149,25 @@ export default class TripPresenter {
       return;
     }
 
-    const addFormComponent = new AddFormView({
-      allDestinations: destinations
+    const addFormComponent = new EditFormView({
+      point: {
+        id: 'new-point',
+        type: 'flight',
+        destination: '',
+        offers: [],
+        dateFrom: '',
+        dateTo: '',
+        basePrice: 0,
+        isFavorite: false
+      },
+      destination: null,
+      offers: [],
+      allOffers: allOffers,
+      allDestinations: destinations,
+      isNew: true,
+      formId: 'new',
+      onFormSubmit: () => {},
+      onRollupClick: () => {}
     });
     render(addFormComponent, this.#tripEventsContainer);
 
