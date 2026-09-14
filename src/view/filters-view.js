@@ -26,11 +26,21 @@ function createFiltersTemplate(filters) {
 
 export default class FiltersView extends AbstractView {
   #filters = [];
+  #handleFilterChange = null;
 
-  constructor({ filters }) {
+  constructor({ filters, onFilterChange }) {
     super();
     this.#filters = filters;
+    this.#handleFilterChange = onFilterChange;
+
+    this.element.addEventListener('change', this.#filterChangeHandler);
   }
+
+  #filterChangeHandler = (evt) => {
+    if (evt.target.name === 'trip-filter') {
+      this.#handleFilterChange?.(evt.target.value);
+    }
+  };
 
   get template() {
     return createFiltersTemplate(this.#filters);

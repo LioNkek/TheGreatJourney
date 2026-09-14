@@ -166,6 +166,7 @@ function createEditFormTemplate({
 export default class EditFormView extends AbstractStatefulView {
   #handleFormSubmit = null;
   #handleRollupClick = null;
+  #handleDeleteClick = null;
   #allOffers = [];
   #allDestinations = [];
   #formId = null;
@@ -179,14 +180,16 @@ export default class EditFormView extends AbstractStatefulView {
     isNew = false,
     formId,
     onFormSubmit,
-    onRollupClick
+    onRollupClick,
+    onDeleteClick
   }) {
     super();
     this.#handleFormSubmit = onFormSubmit;
     this.#handleRollupClick = onRollupClick;
+    this.#handleDeleteClick = onDeleteClick;
     this.#allOffers = allOffers || [];
     this.#allDestinations = allDestinations || [];
-    this.#formId = String(formId).replace(/\./g, '-'); // ✅ Заменяем точки на дефисы
+    this.#formId = String(formId).replace(/\./g, '-');
 
     this._setState({
       point,
@@ -220,6 +223,11 @@ export default class EditFormView extends AbstractStatefulView {
       rollupBtn.addEventListener('click', this.#rollupClickHandler);
     }
 
+    const deleteBtn = this.element.querySelector('.event__reset-btn');
+    if (deleteBtn && !this._state.isNew) {
+      deleteBtn.addEventListener('click', this.#deleteClickHandler);
+    }
+
     const typeInputs = this.element.querySelectorAll('.event__type-input');
     typeInputs.forEach((input) => {
       input.addEventListener('change', this.#typeChangeHandler);
@@ -232,6 +240,11 @@ export default class EditFormView extends AbstractStatefulView {
 
     const startTimeInput = this.element.querySelector('[data-input="start-time"]');
     const endTimeInput = this.element.querySelector('[data-input="end-time"]');
+
+    const priceInput = this.element.querySelector('.event__input--price');
+    if (priceInput) {
+      priceInput.addEventListener('change', this.#priceChangeHandler);
+    }
 
     if (startTimeInput) {
       flatpickr(startTimeInput, {
@@ -270,9 +283,38 @@ export default class EditFormView extends AbstractStatefulView {
     }
   };
 
+  #deleteClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleDeleteClick?.();
+  };
+
+  #priceChangeHandler = (evt) => {
+    const rawValue = evt.target.value;
+    const digitsOnly = rawValue.replace(/\D/g, '');
+    evt.target.value = digitsOnly;
+
+    const newPrice = Number(digitsOnly) || 0;
+    this.updateElement({
+      point: {
+        ...this._state.point,
+        basePrice: newPrice
+      }
+    });
+  };
+
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit?.();
+
+    const checkedOffers = Array.from(
+      this.element.querySelectorAll('.event__offer-checkbox:checked')
+    ).map((checkbox) => checkbox.name.replace('event-offer-', ''));
+
+    const updatedPoint = {
+      ...this._state.point,
+      destination: this._state.destination?.id || '',
+      offers: checkedOffers,
+    };
+    this.#handleFormSubmit?.(updatedPoint);
   };
 
   #rollupClickHandler = (evt) => {
@@ -299,6 +341,7 @@ export default class EditFormView extends AbstractStatefulView {
     );
 
     if (!newDestination) {
+      evt.target.value = this._state.destination?.name || '';
       return;
     }
 
