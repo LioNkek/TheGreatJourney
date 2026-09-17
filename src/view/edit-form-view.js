@@ -281,6 +281,15 @@ export default class EditFormView extends AbstractStatefulView {
         }
       });
     }
+
+    const resetBtn = this.element.querySelector('.event__reset-btn');
+    if (resetBtn) {
+      if (this._state.isNew) {
+        resetBtn.addEventListener('click', this.#rollupClickHandler);
+      } else {
+        resetBtn.addEventListener('click', this.#deleteClickHandler);
+      }
+    }
   };
 
   #deleteClickHandler = (evt) => {
