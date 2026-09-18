@@ -51,9 +51,6 @@ export default class PointPresenter {
     const currentDestination = this.#destinations.find(
       (dest) => dest.id === this.#point.destination
     );
-    const currentPointOffers = this.#allOffers.filter((offer) =>
-      this.#point.offers.includes(offer.id)
-    );
 
     return new EditFormView({
       point: this.#point,
