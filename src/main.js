@@ -11,8 +11,7 @@ import {
   adaptOffersToClient,
 } from './utils/adapter.js';
 import UiBlocker from './framework/ui-blocker/ui-blocker.js';
-
-const uiBlocker = new UiBlocker(300, 1000);
+import TripInfoPresenter from './presenter/trip-info-presenter.js';
 
 const AUTHORIZATION = 'Basic jht76fdshj2389sdf';
 const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';
@@ -21,10 +20,16 @@ const tripEventsContainer = document.querySelector('.trip-events');
 const filtersContainer = document.querySelector('.trip-controls__filters');
 const sortContainer = document.querySelector('.trip-events');
 const newEventButton = document.querySelector('.trip-main__event-add-btn');
+const tripInfoContainer = document.querySelector('.trip-main');
 
 const filterModel = new FilterModel();
 const apiService = new PointsApiService(END_POINT, AUTHORIZATION);
 const pointsModel = new Model(apiService);
+const uiBlocker = new UiBlocker(300, 1000);
+const tripInfoPresenter = new TripInfoPresenter({
+  container: tripInfoContainer,
+  pointsModel,
+});
 
 const loadingComponent = new LoadingView();
 render(loadingComponent, tripEventsContainer);
@@ -41,6 +46,8 @@ Promise.all([
 
     remove(loadingComponent);
 
+    tripInfoPresenter.init();
+
     let filtersPresenter;
 
     const tripPresenter = new TripPresenter({
@@ -49,7 +56,10 @@ Promise.all([
       pointsModel,
       filterModel,
       uiBlocker,
-      onDataChange: () => filtersPresenter?.init(),
+      onDataChange: () => {
+        filtersPresenter?.init();
+        tripInfoPresenter?.init();
+      },
     });
 
     filtersPresenter = new FiltersPresenter({

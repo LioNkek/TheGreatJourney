@@ -213,6 +213,7 @@ export default class TripPresenter {
         try {
           const adaptedPoint = await this.#pointsModel.updatePoint(updatedPoint);
           presenter?.updatePoint(adaptedPoint);
+          this.#onDataChange?.();
         } catch (err) {
           presenter?.setAborting();
           presenter?.setDefault();
