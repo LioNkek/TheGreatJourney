@@ -13,13 +13,16 @@ export default class TripPresenter {
   #currentSort = 'day';
   #pointPresenters = new Map();
   #onDataChange = null;
+  #uiBlocker = null;
+  #addFormComponent = null;
 
-  constructor({ tripEventsContainer, sortContainer, pointsModel, filterModel, onDataChange }) {
+  constructor({ tripEventsContainer, sortContainer, pointsModel, filterModel, onDataChange, uiBlocker }) {
     this.#tripEventsContainer = tripEventsContainer;
     this.#sortContainer = sortContainer;
     this.#pointsModel = pointsModel;
     this.#filterModel = filterModel;
-    this.#onDataChange = onDataChange; // ← ТЕПЕРЬ ПЕРЕДАЁТСЯ
+    this.#onDataChange = onDataChange;
+    this.#uiBlocker = uiBlocker;
   }
 
   init() {
@@ -120,7 +123,7 @@ export default class TripPresenter {
   }
 
   #renderAddForm(destinations, allOffers) {
-    const addFormComponent = new EditFormView({
+    this.#addFormComponent = new EditFormView({
       point: {
         id: `new-${Date.now()}`,
         type: 'flight',
@@ -144,7 +147,7 @@ export default class TripPresenter {
         this.#renderTripEvents(false);
       }
     });
-    render(addFormComponent, this.#tripEventsContainer);
+    render(this.#addFormComponent, this.#tripEventsContainer);
   }
 
   #renderEmpty(filterType) {
@@ -185,6 +188,8 @@ export default class TripPresenter {
     if (addForm) {
       addForm.remove();
     }
+
+    this.#addFormComponent = null;
   }
 
   #handleSortChange = (sortType) => {
@@ -198,34 +203,59 @@ export default class TripPresenter {
   };
 
   #handleDataChange = async (actionType, updatedPoint) => {
+    this.#uiBlocker.block();
+
     switch (actionType) {
       case UserAction.UPDATE_POINT: {
-        const adaptedPoint = await this.#pointsModel.updatePoint(updatedPoint);
+        const presenter = this.#pointPresenters.get(updatedPoint.id);
+        presenter?.setSaving();
 
-        const presenter = this.#pointPresenters.get(adaptedPoint.id);
-        if (presenter) {
-          presenter.updatePoint(adaptedPoint);
+        try {
+          const adaptedPoint = await this.#pointsModel.updatePoint(updatedPoint);
+          presenter?.updatePoint(adaptedPoint);
+        } catch (err) {
+          presenter?.setAborting();
+          presenter?.setDefault();
         }
         break;
       }
 
-      case UserAction.DELETE_POINT:
-        this.#pointsModel.deletePoint(updatedPoint.id);
-        this.#pointPresenters.get(updatedPoint.id)?.destroy();
-        this.#pointPresenters.delete(updatedPoint.id);
-        this.#renderTripEvents();
-        this.#onDataChange?.();
-        break;
+      case UserAction.DELETE_POINT: {
+        const presenter = this.#pointPresenters.get(updatedPoint.id);
+        presenter?.setDeleting();
 
-      case UserAction.ADD_POINT:
-        this.#pointsModel.addPoint(updatedPoint);
-        this.#renderTripEvents();
-        this.#onDataChange?.();
+        try {
+          await this.#pointsModel.deletePoint(updatedPoint);
+          this.#pointPresenters.get(updatedPoint.id)?.destroy();
+          this.#pointPresenters.delete(updatedPoint.id);
+          this.#renderTripEvents();
+          this.#onDataChange?.();
+        } catch (err) {
+          presenter?.setAborting();
+          presenter?.setDefault();
+        }
         break;
+      }
+
+      case UserAction.ADD_POINT: {
+        this.#addFormComponent?.setSaving();
+
+        try {
+          await this.#pointsModel.addPoint(updatedPoint);
+          this.#renderTripEvents();
+          this.#onDataChange?.();
+        } catch (err) {
+          this.#addFormComponent?.setAborting();
+          this.#addFormComponent?.setDefault();
+        }
+        break;
+      }
 
       default:
         break;
     }
+
+    this.#uiBlocker.unblock();
   };
 
   #handleModeChange = () => {

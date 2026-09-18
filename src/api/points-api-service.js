@@ -4,6 +4,8 @@ import { adaptPointToServer } from '../utils/adapter.js';
 const Method = {
   GET: 'GET',
   PUT: 'PUT',
+  POST: 'POST',
+  DELETE: 'DELETE',
 };
 
 export default class PointsApiService extends ApiService {
@@ -29,4 +31,23 @@ export default class PointsApiService extends ApiService {
 
     return ApiService.parseResponse(response);
   }
+
+  async createPoint(point) {
+    const response = await this._load({
+      url: 'points',
+      method: Method.POST,
+      body: JSON.stringify(adaptPointToServer(point)),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    });
+    return ApiService.parseResponse(response);
+  }
+
+  async deletePoint(point) {
+    await this._load({
+      url: `points/${point.id}`,
+      method: Method.DELETE,
+    });
+  }
 }
+
+

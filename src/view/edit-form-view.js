@@ -358,4 +358,42 @@ export default class EditFormView extends AbstractStatefulView {
       destination: newDestination
     });
   };
+
+  setSaving() {
+    const saveBtn = this.element.querySelector('.event__save-btn');
+    if (saveBtn) {
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+    }
+  }
+
+  setDeleting() {
+    const deleteBtn = this.element.querySelector('.event__reset-btn');
+    if (deleteBtn) {
+      deleteBtn.textContent = 'Deleting...';
+      deleteBtn.disabled = true;
+    }
+  }
+
+  setAborting() {
+    const form = this.element.querySelector('form');
+    if (form) {
+      form.classList.add('shake');
+      setTimeout(() => form.classList.remove('shake'), 600);
+    }
+  }
+
+  setDefault() {
+    const saveBtn = this.element.querySelector('.event__save-btn');
+    if (saveBtn) {
+      saveBtn.textContent = 'Save';
+      saveBtn.disabled = false;
+    }
+
+    const resetBtn = this.element.querySelector('.event__reset-btn');
+    if (resetBtn) {
+      resetBtn.textContent = this._state.isNew ? 'Cancel' : 'Delete';
+      resetBtn.disabled = false;
+    }
+  }
 }

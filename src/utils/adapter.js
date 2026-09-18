@@ -37,7 +37,6 @@ export function adaptOffersToClient(offersGroup) {
 
 export function adaptPointToServer(point) {
   return {
-    'id': point.id,
     'type': point.type,
     'destination': point.destination,
     'offers': point.offers,

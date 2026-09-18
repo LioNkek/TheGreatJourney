@@ -131,4 +131,24 @@ export default class PointPresenter {
       this.#editComponent = null;
     }
   }
+
+  setSaving() {
+    this.#editComponent?.setSaving();
+  }
+
+  setDeleting() {
+    this.#editComponent?.setDeleting();
+  }
+
+  setAborting() {
+    if (this.#editComponent) {
+      this.#editComponent.setAborting();
+    } else if (this.#pointComponent) {
+      this.#pointComponent.setAborting();
+    }
+  }
+
+  setDefault() {
+    this.#editComponent?.setDefault();
+  }
 }

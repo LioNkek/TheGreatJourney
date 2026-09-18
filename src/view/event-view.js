@@ -1,5 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { formatDate, formatTime, formatDuration } from '../utils/date-utils.js';
+import '../framework/view/abstract-view.css';
 
 function createOffersHTML(offers) {
   if (!offers || offers.length === 0) {
@@ -96,5 +97,13 @@ export default class EventView extends AbstractView {
       destination: this.#destination,
       offers: this.#offers
     });
+  }
+
+  setAborting() {
+    const event = this.element.querySelector('.event');
+    if (event) {
+      event.classList.add('shake');
+      setTimeout(() => event.classList.remove('shake'), 600);
+    }
   }
 }

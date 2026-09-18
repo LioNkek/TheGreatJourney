@@ -10,6 +10,9 @@ import {
   adaptDestinationToClient,
   adaptOffersToClient,
 } from './utils/adapter.js';
+import UiBlocker from './framework/ui-blocker/ui-blocker.js';
+
+const uiBlocker = new UiBlocker(300, 1000);
 
 const AUTHORIZATION = 'Basic jht76fdshj2389sdf';
 const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';
@@ -45,6 +48,7 @@ Promise.all([
       sortContainer,
       pointsModel,
       filterModel,
+      uiBlocker,
       onDataChange: () => filtersPresenter?.init(),
     });
 
