@@ -72,7 +72,7 @@ function createEditFormTemplate({
   const pictures = destination ? destination.pictures : [];
 
   const currentTypeOffers = allOffers.filter((offer) =>
-    offer.id.startsWith(point.type)
+    offer.type === point.type
   );
 
   const typesHTML = createTypesHTML(point.type || 'flight', formId);

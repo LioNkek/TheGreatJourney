@@ -58,7 +58,7 @@ export default class PointPresenter {
     return new EditFormView({
       point: this.#point,
       destination: currentDestination,
-      offers: currentPointOffers,
+      offers: this.#point.offers,
       allOffers: this.#allOffers,
       allDestinations: this.#destinations,
       isNew: false,
@@ -116,10 +116,7 @@ export default class PointPresenter {
     this.#point = updatedPoint;
 
     if (this.#editComponent) {
-      const newEditComponent = this.#createEditComponent();
-      replace(newEditComponent, this.#editComponent);
-      this.#editComponent = newEditComponent;
-      return;
+      this.#replaceEditToPoint();
     }
 
     const newPointComponent = this.#createEventComponent();

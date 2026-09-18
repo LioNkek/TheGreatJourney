@@ -197,13 +197,14 @@ export default class TripPresenter {
     this.#renderTripEvents();
   };
 
-  #handleDataChange = (actionType, updatedPoint) => {
+  #handleDataChange = async (actionType, updatedPoint) => {
     switch (actionType) {
       case UserAction.UPDATE_POINT: {
-        this.#pointsModel.updatePoint(updatedPoint);
-        const presenter = this.#pointPresenters.get(updatedPoint.id);
+        const adaptedPoint = await this.#pointsModel.updatePoint(updatedPoint);
+
+        const presenter = this.#pointPresenters.get(adaptedPoint.id);
         if (presenter) {
-          presenter.updatePoint(updatedPoint);
+          presenter.updatePoint(adaptedPoint);
         }
         break;
       }
