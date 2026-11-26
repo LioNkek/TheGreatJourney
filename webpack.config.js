@@ -8,6 +8,7 @@ module.exports = {
     filename: 'bundle.[contenthash].js',
     path: path.resolve(__dirname, 'build'),
     clean: true,
+    publicPath: '/TheGreatJourney/', // <-- ДОБАВЛЕНО: префикс для GitHub Pages
   },
   devtool: 'source-map',
   module: {
@@ -33,7 +34,7 @@ module.exports = {
       patterns: [
         {
           from: 'public',
-          to: 'build',
+          to: '.', // <-- ИСПРАВЛЕНО: копируем в корень папки build, а не в build/build
           globOptions: {
             ignore: ['**/index.html'],
           },
