@@ -34,7 +34,7 @@ module.exports = {
       patterns: [
         {
           from: 'public',
-          to: '.', // <-- ИСПРАВЛЕНО: копируем в корень папки build, а не в build/build
+          to: '.',
           globOptions: {
             ignore: ['**/index.html'],
           },
